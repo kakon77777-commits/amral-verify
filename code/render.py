@@ -84,7 +84,7 @@ PAGE = '''<!DOCTYPE html>
 <div class="wrap narrow">
 {body}
 <footer class="sitefoot">
-  <span>AMRAL Verify — secondary verification of AI-frontier-math research lines, rendered from each line's own results.v1.json at build time. Every number carries the exact source path it was rendered from (hover to see it) — not a link, and results.v1.json is a summary its own build derives from the gate logs, not the gate logs themselves.</span>
+  <span>AMRAL Verify — secondary verification of AI-frontier-math research lines, rendered from each line's own results.v1.json at build time. A figure with a dotted underline carries the exact source path it was rendered from (hover to see it) — not a link, and results.v1.json is a summary its own build derives from the gate logs, not the gate logs themselves. A number inside a claim's own prose is that claim's own wording, not separately source-tracked.</span>
   <a href="https://amral.evemisslab.com/">AMRAL main site</a>
 </footer>
 </div>
@@ -224,6 +224,21 @@ def build_line_detail(line, ctx, out_dir):
   <div class="stats">{"".join(f'<div class="stat"><span class="n">{sourced(root, p)}</span><span class="l">{esc(l)}</span></div>' for p, l in cov_stats)}</div>
 </section>'''
 
+    # A heading with nothing under it reads as "this line has none of
+    # this" or "this page is broken", not "this line's own data uses a
+    # different shape" -- found on the ERDOS page 2026-09-03, where
+    # paper_sweep/gates are Collatz's own field names and don't exist in
+    # ERDOS's (exact_reduction/exact_certificates/bounded_searches). Omit
+    # the section (heading included) entirely rather than ship an empty
+    # one; this renderer has no generic way yet to say why it's empty for
+    # a line whose evidence shape it doesn't recognize.
+    scale_section = (f'<section>\n  <h2 class="doc-h2">Verification scale</h2>\n'
+                      f'  {scale_html}\n  <div class="stats">{stat_html}</div>\n</section>'
+                      if (scale_html or stat_html) else "")
+    gates_section = (f'<section id="gates">\n  <h2 class="doc-h2">Gates</h2>\n'
+                      f'  {gates_html}\n</section>'
+                      if gates_html else "")
+
     body = f'''<div class="crumb"><a href="../">← AMRAL Verify</a> · {esc(slug)}</div>
 <header class="pkg">
   <div class="idline">
@@ -234,16 +249,9 @@ def build_line_detail(line, ctx, out_dir):
   <p class="h1-sub">Profile: {esc(", ".join(ev["satisfies"]) or "envelope not satisfied")}</p>
 </header>
 {body_claims}
-<section>
-  <h2 class="doc-h2">Verification scale</h2>
-  {scale_html}
-  <div class="stats">{stat_html}</div>
-</section>
+{scale_section}
 {coverage_html}
-<section id="gates">
-  <h2 class="doc-h2">Gates</h2>
-  {gates_html}
-</section>
+{gates_section}
 <section id="provenance">
   <h2 class="doc-h2">Provenance</h2>
   <p class="section-note">Rendered {esc(_today())} from <code>{esc(line["branch"])}</code> at build time — not vendored into this site. Full reports and gate logs: <a href="https://github.com/kakon77777-commits/amral-research-trees/tree/{esc(line["branch"])}/{esc(slug)}">amral-research-trees / {esc(line["branch"])}</a>.</p>
