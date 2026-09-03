@@ -2,9 +2,10 @@
 """
 Build orchestrator, all three gates in order:
 
-  1. fetch_and_validate -- clone each line's branch fresh, run ITS OWN
-     validate_results_profiles.py. A file that lies about a profile it
-     declares stops the build here.
+  1. fetch_and_validate_all -- clone amral-research-trees fresh (once),
+     run validate_results_profiles.py in its own cross-branch mode. A
+     registered line that declares a profile it doesn't satisfy stops
+     the build here.
   2. render -- build the site, every number wrapped in sourced() so it
      carries the JSON path it came from.
   3. verify_readback -- scrape every built page's sourced() spans back out
@@ -32,12 +33,9 @@ def main():
     cache_dir = tempfile.mkdtemp(prefix="amral-verify-build-")
     try:
         print(f"Gate 1: fetch + profile-check {len(lines_module.LINES)} line(s)")
-        lines_data = {}
-        for line in lines_module.LINES:
-            print(f"  {line['slug']} <- {line['branch']}")
-            ctx = gate1.fetch_and_validate(line, cache_dir)
-            ctx["line"] = line
-            lines_data[line["slug"]] = ctx
+        lines_data = gate1.fetch_and_validate_all(lines_module.LINES, cache_dir)
+        for slug, ctx in lines_data.items():
+            print(f"  {slug} <- {ctx['line']['branch']}")
             print(f"    satisfies: {ctx['evaluation']['satisfies'] or '(envelope only)'}")
 
         print("Gate 2: render")
