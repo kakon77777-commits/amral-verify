@@ -48,8 +48,10 @@ def main():
 
         print("Gate 3: readback verification")
         total_checked = 0
-        total_checked += gate3.verify_page(os.path.join(PUBLIC, "index.html"),
-                                            {"global_status": {}})  # hub has no sourced() spans yet
+        hub_roots = {slug: ctx["results"] for slug, ctx in lines_data.items()}
+        n = gate3.verify_page(os.path.join(PUBLIC, "index.html"), hub_roots)
+        print(f"  hub: {n} sourced values, all match their source")
+        total_checked += n
         for slug, ctx in lines_data.items():
             page = os.path.join(PUBLIC, slug, "index.html")
             n = gate3.verify_page(page, ctx["results"])

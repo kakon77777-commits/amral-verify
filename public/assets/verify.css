@@ -19,3 +19,14 @@ ul.non-claims {
   color: var(--ink-dim);
 }
 ul.non-claims li { margin-bottom: 6px; }
+
+/* Visual clamp only -- the full statement stays in the DOM (selectable,
+   searchable, indexable). A character-count slice cut a non-claim off
+   mid-word and mid-sentence; this is a display property, not a data
+   transform, so Gate 3's readback check still sees the whole string. */
+.card-excerpt {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

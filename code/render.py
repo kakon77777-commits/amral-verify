@@ -35,11 +35,18 @@ def jtext(value):
     return str(value)
 
 
-def sourced(root, path):
+def sourced(root, path, line_slug=None):
     """<span> wrapping a value pulled live from root at path, carrying
-    its own source path so Gate 3 can check it after the fact."""
+    its own source path so Gate 3 can check it after the fact.
+
+    line_slug is required on any page that can carry more than one
+    line's data (the hub) -- otherwise a bare path is ambiguous about
+    which line's JSON it should be checked against. It's encoded into
+    data-source as "<slug>::<path>" so verify_readback.py can route each
+    span to the right source document."""
     value = jtext(jval(root, path))
-    return (f'<span class="sourced" data-source="{html.escape(path)}" '
+    source_attr = f"{line_slug}::{path}" if line_slug else path
+    return (f'<span class="sourced" data-source="{html.escape(source_attr)}" '
             f'title="source: {html.escape(path)}">{html.escape(value)}</span>')
 
 
@@ -89,11 +96,15 @@ def build_hub(lines_data, out_dir):
     cards = []
     for slug, ctx in lines_data.items():
         line = ctx["line"]
+        # Full statement text stays in the DOM -- clamped to a few lines
+        # visually by CSS (verify.css .card-excerpt), never hard-truncated
+        # by character count. A DOM-level cut mid-sentence dropped exactly
+        # the half of a non-claim that matters most, found 2026-09-03.
         cards.append(
             f'<a class="case-card" href="{slug}/">'
             f'<span class="k">{esc(line["researcher_label"])}</span>'
             f'<h3>{esc(line["title"])}</h3>'
-            f'<p>{esc(ctx["results"]["global_status"]["statement"][:140])}...</p>'
+            f'<p class="card-excerpt">{sourced(ctx["results"], "global_status.statement", line_slug=slug)}</p>'
             f'</a>'
         )
     body = f'''<header class="page">
@@ -115,6 +126,20 @@ def build_hub(lines_data, out_dir):
         f.write(html_out)
 
 
+def build_status_block(root):
+    """global_status.statement, in full, on every line's page regardless
+    of which profile it satisfies -- found missing entirely from the
+    claims branch 2026-09-03 (the more complete a line's structured data,
+    the less of its own boundary statement was showing, which is
+    backwards). Same block, same position, both branches."""
+    return f'''<section id="status">
+  <h2 class="doc-h2">Status</h2>
+  <div class="claim-box" style="border-color: var(--ink-dim); background: var(--paper-raised); color: var(--ink);">
+    {sourced(root, "global_status.statement")}
+  </div>
+</section>'''
+
+
 def build_claims_line(root):
     claims = "".join(
         f'<tr><td class="claim-id">{esc(c.get("id",""))}</td>'
@@ -122,7 +147,8 @@ def build_claims_line(root):
         for c in root["verified_claims"]
     )
     non_claims = "".join(f"<li>{esc(s)}</li>" for s in root["explicit_non_claims"])
-    return f'''<section id="claims">
+    return build_status_block(root) + f'''
+<section id="claims">
   <h2 class="doc-h2">Verified claims</h2>
   <table class="ledger"><thead><tr><th>ID</th><th>Claim</th></tr></thead><tbody>{claims}</tbody></table>
 </section>
@@ -134,11 +160,8 @@ def build_claims_line(root):
 
 
 def build_envelope_only_line(root):
-    return f'''<section id="claims">
-  <h2 class="doc-h2">Status</h2>
-  <div class="claim-box" style="border-color: var(--ink-dim); background: var(--paper-raised); color: var(--ink);">
-    {esc(root["global_status"]["statement"])}
-  </div>
+    return build_status_block(root) + '''
+<section id="claims">
   <p class="section-note">This line does not yet satisfy the structured-claims profile (<code>results-claims/1</code>) — it has no <code>verified_claims</code>/<code>explicit_non_claims</code> arrays. That is not an error: its boundary is stated above in its own words, and is rendered here rather than dropped because it did not arrive in the expected fields.</p>
 </section>'''
 
@@ -155,17 +178,42 @@ def build_line_detail(line, ctx, out_dir):
     coverage = root.get("coverage", {})
     gates = root.get("gates", {})
 
-    stats = []
-    if ps:
-        stats.append(("paper_sweep.rechecked_by_this_tree", "items rechecked"))
-        stats.append(("paper_sweep.run_reports", "run reports"))
-        stats.append(("paper_sweep.drills", "drills"))
-        stats.append(("paper_sweep.defects_caught_by_the_named_check", "defects caught"))
-        stats.append(("paper_sweep.controls_undisturbed", "controls undisturbed"))
+    # Standalone counts -- no natural "total" to pair against.
+    solo_stats = [(p, l) for p, l in [
+        ("paper_sweep.run_reports", "run reports"),
+        ("paper_sweep.drills", "drills"),
+    ] if _path_exists(root, p)]
     stat_html = "".join(
         f'<div class="stat"><span class="n">{sourced(root, path)}</span><span class="l">{esc(label)}</span></div>'
-        for path, label in stats if _path_exists(root, path)
+        for path, label in solo_stats
     )
+
+    # Every number below is meaningless without its pair -- "1441 caught"
+    # alone can't be told apart from "1441 of 2000 caught". Both halves
+    # of each pair are rendered together, every time. Found missing
+    # 2026-09-03 by 墜衡's own review of this exact page.
+    scale_sentences = []
+    if all(_path_exists(root, p) for p in ("paper_sweep.rechecked_by_this_tree",
+                                            "paper_sweep.source_items",
+                                            "paper_sweep.belongs_to_another_research_line")):
+        scale_sentences.append(
+            f'{sourced(root, "paper_sweep.rechecked_by_this_tree")} of '
+            f'{sourced(root, "paper_sweep.source_items")} source items rechecked by this line '
+            f'({sourced(root, "paper_sweep.belongs_to_another_research_line")} belongs to a sibling research line).'
+        )
+    if all(_path_exists(root, p) for p in ("paper_sweep.defects_planted",
+                                            "paper_sweep.defects_caught_by_the_named_check")):
+        scale_sentences.append(
+            f'{sourced(root, "paper_sweep.defects_planted")} defects planted, '
+            f'{sourced(root, "paper_sweep.defects_caught_by_the_named_check")} caught by the named check.'
+        )
+    if all(_path_exists(root, p) for p in ("paper_sweep.controls",
+                                            "paper_sweep.controls_undisturbed")):
+        scale_sentences.append(
+            f'{sourced(root, "paper_sweep.controls")} controls, '
+            f'{sourced(root, "paper_sweep.controls_undisturbed")} undisturbed.'
+        )
+    scale_html = f'<p class="section-note">{" ".join(scale_sentences)}</p>' if scale_sentences else ""
 
     gate_rows = []
     for gname, gpath in [("Self-test", "gates.self_test.ok"),
@@ -201,6 +249,7 @@ def build_line_detail(line, ctx, out_dir):
 {body_claims}
 <section>
   <h2 class="doc-h2">Verification scale</h2>
+  {scale_html}
   <div class="stats">{stat_html}</div>
 </section>
 {coverage_html}
@@ -217,7 +266,7 @@ def build_line_detail(line, ctx, out_dir):
     os.makedirs(out, exist_ok=True)
     html_out = PAGE.format(
         title=f'{line["title"]} · AMRAL Verify',
-        description=root["global_status"]["statement"][:250],
+        description=esc(root["global_status"]["statement"]),
         r="../", nav=nav(1, "./", line["title"]), body=body)
     with open(os.path.join(out, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(html_out)
