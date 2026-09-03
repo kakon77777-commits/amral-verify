@@ -181,11 +181,16 @@ def build_line_detail(line, ctx, out_dir):
     # for any line's own data shape; a line's own validator enforces that
     # nothing declared here also appears in its own render_pairs, so a
     # figure that needs a denominator can't be re-offered as if it didn't.
-    stat_html = "".join(
-        f'<div class="stat"><span class="n">{sourced(root, f["path"])}</span><span class="l">{esc(f["label"])}</span></div>'
-        for f in ev.get("headline_figures_to_render", [])
-        if _path_exists(root, f.get("path", ""))
-    )
+    # kind distinguishes a single value ("number", default) from a
+    # two-endpoint range ("range", e.g. a covered domain) that must
+    # render as one figure, not two separately-droppable numbers -- a
+    # range declared as two independent figures would let this renderer
+    # show the lower bound without the upper one, the same "denominator
+    # went missing" shape as an unpaired figure, just wearing a range's
+    # clothes. The declared kind is cross-checked against the actual
+    # parsed shape by the line's own validator, not trusted blindly here.
+    stat_html = "".join(build_headline_figure(root, f) for f in ev.get("headline_figures_to_render", [])
+                         if _path_exists(root, f.get("path", "")))
 
     # Which figures must never render alone is this line's own fact, not
     # something this renderer can guess -- read from the line's own
@@ -204,19 +209,11 @@ def build_line_detail(line, ctx, out_dir):
             gate_rows.append(f'<tr><td>{esc(gname)}</td><td>{sourced(root, gpath)}</td></tr>')
     gates_html = f'<table class="ledger"><thead><tr><th>Gate</th><th>Result</th></tr></thead><tbody>{"".join(gate_rows)}</tbody></table>' if gate_rows else ""
 
-    # Everything that fits headline_figures' flat {path, label} shape
-    # (odd_starts_checked, total_engine_seconds, chunks, ...) is declared
-    # there now and rendered generically above -- listing any of them
-    # again here would duplicate them on the page. All that's left for
-    # this section is the domain range, which doesn't fit that shape (a
-    # range needs both endpoints shown together, not one label each) and
-    # so stays this renderer's own -- Collatz-specific -- presentation.
-    coverage_html = ""
-    if _path_exists(root, "coverage.covered_interval.0") and _path_exists(root, "coverage.covered_interval.1"):
-        coverage_html = f'''<section id="coverage">
-  <h2 class="doc-h2">Coverage</h2>
-  <p class="section-note">Domain: {sourced(root, "coverage.covered_interval.0")} – {sourced(root, "coverage.covered_interval.1")}</p>
-</section>'''
+    # No hardcoded Coverage section left at all -- the domain range that
+    # used to live here is now declared as a "range"-kind headline figure
+    # (coverage.covered_interval) and rendered generically above, with a
+    # source path it didn't reliably carry as a matter of contract before
+    # (only as a matter of how this renderer happened to be written).
 
     # A heading with nothing under it reads as "this line has none of
     # this" or "this page is broken", not "this line's own data uses a
@@ -244,7 +241,6 @@ def build_line_detail(line, ctx, out_dir):
 </header>
 {body_claims}
 {scale_section}
-{coverage_html}
 {gates_section}
 <section id="provenance">
   <h2 class="doc-h2">Provenance</h2>
@@ -259,6 +255,22 @@ def build_line_detail(line, ctx, out_dir):
         r="../", nav=nav(1, "./", line["title"]), body=body)
     with open(os.path.join(out, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(html_out)
+
+
+def build_headline_figure(root, f):
+    """One <div class="stat"> for a declared headline figure. kind
+    "number" (default) sources a single value; "range" sources the two
+    elements of a list value and shows them together, since a range's two
+    endpoints are one figure, not two independently-droppable ones -- the
+    line's own validator cross-checks the declared kind against what the
+    path actually resolves to, so an inconsistent declaration never
+    reaches this function at all."""
+    kind = f.get("kind", "number")
+    label = esc(f.get("label", ""))
+    if kind == "range":
+        lo, hi = f["path"] + ".0", f["path"] + ".1"
+        return f'<div class="stat"><span class="n">{sourced(root, lo)} – {sourced(root, hi)}</span><span class="l">{label}</span></div>'
+    return f'<div class="stat"><span class="n">{sourced(root, f["path"])}</span><span class="l">{label}</span></div>'
 
 
 def build_pairs_section(root, pairs):
