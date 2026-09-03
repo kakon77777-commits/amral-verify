@@ -207,8 +207,14 @@ def build_line_detail(line, ctx, out_dir):
 
     coverage_html = ""
     if coverage:
+        # odd_starts_checked is deliberately NOT listed here even though
+        # it's a coverage figure -- it's already rendered, correctly
+        # paired with odd_starts_expected, in Verification scale above.
+        # Rendering it again here bare (no pair alongside it) reintroduces
+        # exactly the gap build_pairs_section() exists to close, in a
+        # different section of the same page -- found by 墜衡 checking
+        # this exact page, 2026-09-03.
         cov_stats = [(p, l) for p, l in [
-            ("coverage.odd_starts_checked", "odd starts checked"),
             ("coverage.total_engine_seconds", "engine seconds"),
         ] if _path_exists(root, p)]
         if cov_stats:
