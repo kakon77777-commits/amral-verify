@@ -49,13 +49,17 @@ def main():
         print("Gate 3: readback verification")
         total_checked = 0
         hub_roots = {slug: ctx["results"] for slug, ctx in lines_data.items()}
-        n = gate3.verify_page(os.path.join(PUBLIC, "index.html"), hub_roots)
+        hub_pairs = {slug: ctx["evaluation"].get("figures_that_must_not_be_shown_alone", [])
+                     for slug, ctx in lines_data.items()}
+        n = gate3.verify_page(os.path.join(PUBLIC, "index.html"), hub_roots, hub_pairs)
         print(f"  hub: {n} sourced values, all match their source")
         total_checked += n
         for slug, ctx in lines_data.items():
             page = os.path.join(PUBLIC, slug, "index.html")
-            n = gate3.verify_page(page, ctx["results"])
-            print(f"  {slug}: {n} sourced values, all match their source")
+            pairs = ctx["evaluation"].get("figures_that_must_not_be_shown_alone", [])
+            n = gate3.verify_page(page, ctx["results"], pairs)
+            print(f"  {slug}: {n} sourced values, all match their source"
+                  f"{f', {len(pairs)} declared pair(s) enforced' if pairs else ''}")
             total_checked += n
         print(f"  {total_checked} sourced values verified across all pages")
 

@@ -188,32 +188,13 @@ def build_line_detail(line, ctx, out_dir):
         for path, label in solo_stats
     )
 
-    # Every number below is meaningless without its pair -- "1441 caught"
-    # alone can't be told apart from "1441 of 2000 caught". Both halves
-    # of each pair are rendered together, every time. Found missing
-    # 2026-09-03 by 墜衡's own review of this exact page.
-    scale_sentences = []
-    if all(_path_exists(root, p) for p in ("paper_sweep.rechecked_by_this_tree",
-                                            "paper_sweep.source_items",
-                                            "paper_sweep.belongs_to_another_research_line")):
-        scale_sentences.append(
-            f'{sourced(root, "paper_sweep.rechecked_by_this_tree")} of '
-            f'{sourced(root, "paper_sweep.source_items")} source items rechecked by this line '
-            f'({sourced(root, "paper_sweep.belongs_to_another_research_line")} belongs to a sibling research line).'
-        )
-    if all(_path_exists(root, p) for p in ("paper_sweep.defects_planted",
-                                            "paper_sweep.defects_caught_by_the_named_check")):
-        scale_sentences.append(
-            f'{sourced(root, "paper_sweep.defects_planted")} defects planted, '
-            f'{sourced(root, "paper_sweep.defects_caught_by_the_named_check")} caught by the named check.'
-        )
-    if all(_path_exists(root, p) for p in ("paper_sweep.controls",
-                                            "paper_sweep.controls_undisturbed")):
-        scale_sentences.append(
-            f'{sourced(root, "paper_sweep.controls")} controls, '
-            f'{sourced(root, "paper_sweep.controls_undisturbed")} undisturbed.'
-        )
-    scale_html = f'<p class="section-note">{" ".join(scale_sentences)}</p>' if scale_sentences else ""
+    # Which figures must never render alone is this line's own fact, not
+    # something this renderer can guess -- read from the line's own
+    # validator output (figures_that_must_not_be_shown_alone under the
+    # results-pairs/1 profile), never hand-typed here. A new pair the
+    # source declares appears with no change on this end; one this
+    # renderer can't resolve is simply skipped, not guessed at.
+    scale_html = build_pairs_section(root, ev.get("figures_that_must_not_be_shown_alone", []))
 
     gate_rows = []
     for gname, gpath in [("Self-test", "gates.self_test.ok"),
@@ -270,6 +251,30 @@ def build_line_detail(line, ctx, out_dir):
         r="../", nav=nav(1, "./", line["title"]), body=body)
     with open(os.path.join(out, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(html_out)
+
+
+def build_pairs_section(root, pairs):
+    """Render every figure the line's own validator declares must not be
+    shown alone -- generically, from figures_that_must_not_be_shown_alone,
+    never a list hand-typed on this end. That list is the line's own
+    semantic fact (which number is load-bearing), and hand-copying it
+    here would just be a second copy of the same truth this whole day's
+    work has been about eliminating. A pair this renderer can't resolve
+    (a path that doesn't exist in this build) is skipped, not guessed at."""
+    if not pairs:
+        return ""
+    rows = []
+    for p in pairs:
+        if not (_path_exists(root, p.get("value", "")) and _path_exists(root, p.get("against", ""))):
+            continue
+        rows.append(
+            f'<tr><td>{sourced(root, p["value"])} / {sourced(root, p["against"])}</td>'
+            f'<td>{esc(p.get("label", ""))}</td></tr>'
+        )
+    if not rows:
+        return ""
+    return (f'<table class="ledger"><thead><tr><th>Figure / against</th><th>What it measures</th></tr></thead>'
+            f'<tbody>{"".join(rows)}</tbody></table>')
 
 
 def _path_exists(root, path):
