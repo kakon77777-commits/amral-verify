@@ -1,0 +1,13 @@
+// Project AMRAL Verify — secondary verification sub-site. Assets-only Worker.
+// Build: python code/build.py   (writes ./public)
+// Deploy: npx wrangler deploy   (run from this repo's root)
+{
+  "name": "amral-verify",
+  "compatibility_date": "2026-09-03",
+  "assets": {
+    "directory": "./public"
+  },
+  "routes": [
+    { "pattern": "verify.evemisslab.com", "custom_domain": true }
+  ]
+}

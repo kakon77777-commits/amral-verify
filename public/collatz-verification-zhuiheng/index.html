@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collatz Conjecture — Secondary Verification · AMRAL Verify</title>
+<meta name="description" content="A bounded exhaustive verification and a falsifiability-drilled instrument. Nothing here bears on the conjecture itself, and the bound reached is far below the published frontier.">
+<meta name="robots" content="index, follow">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/verify.css">
+</head>
+<body>
+<nav class="sitenav"><div class="inner">
+  <a class="brand" href="../">AMRAL Verify</a>
+  <a class="link" href="https://amral.evemisslab.com/">AMRAL main site</a>
+  <a class="link active" href="./">Collatz Conjecture — Secondary Verification</a>
+</div></nav>
+<div class="wrap narrow">
+<div class="crumb"><a href="../">← AMRAL Verify</a> · collatz-verification-zhuiheng</div>
+<header class="pkg">
+  <div class="idline">
+    <span class="tag">數學戰士「墜衡」</span>
+    <span class="status">2026-09-03</span>
+  </div>
+  <h1>Collatz Conjecture — Secondary Verification</h1>
+  <p class="h1-sub">Profile: results-envelope/1, results-claims/1</p>
+</header>
+<section id="claims">
+  <h2 class="doc-h2">Verified claims</h2>
+  <table class="ledger"><thead><tr><th>ID</th><th>Claim</th></tr></thead><tbody><tr><td class="claim-id">V1</td><td>every integer n with 1 &lt;= n &lt;= 1099511627776 has a Collatz trajectory reaching 1</td></tr><tr><td class="claim-id">V2</td><td>no nontrivial Collatz cycle has all of its elements &lt;= 1099511627776</td></tr></tbody></table>
+</section>
+<section id="non-claims">
+  <h2 class="doc-h2">Explicit non-claims</h2>
+  <p class="section-note">What this line does not establish, stated by the line itself — rendered on the same screen as the claims above, not behind a toggle.</p>
+  <ul class="non-claims"><li>nothing about any n &gt; the domain upper bound</li><li>nothing about cycles containing an element above the domain upper bound</li><li>no support, evidence, or suggestion regarding the conjecture itself</li><li>no independent confirmation of the published 2^71 frontier - only that the citation for it resolves correctly</li><li>nothing in the paper sweep bears on the conjecture either: every bundle claim rechecked there is a finite statement about finite objects</li><li>the sweep rechecks the series&#x27; own claims and its own checking apparatus; it does not assess whether the series&#x27; program can close the conjecture</li><li>a defect found in a bundle&#x27;s checker is a defect in the evidence offered for a claim, not a refutation of the claim</li></ul>
+</section>
+<section>
+  <h2 class="doc-h2">Verification scale</h2>
+  <div class="stats"><div class="stat"><span class="n"><span class="sourced" data-source="paper_sweep.rechecked_by_this_tree" title="source: paper_sweep.rechecked_by_this_tree">72</span></span><span class="l">items rechecked</span></div><div class="stat"><span class="n"><span class="sourced" data-source="paper_sweep.run_reports" title="source: paper_sweep.run_reports">52</span></span><span class="l">run reports</span></div><div class="stat"><span class="n"><span class="sourced" data-source="paper_sweep.drills" title="source: paper_sweep.drills">55</span></span><span class="l">drills</span></div><div class="stat"><span class="n"><span class="sourced" data-source="paper_sweep.defects_caught_by_the_named_check" title="source: paper_sweep.defects_caught_by_the_named_check">1441</span></span><span class="l">defects caught</span></div><div class="stat"><span class="n"><span class="sourced" data-source="paper_sweep.controls_undisturbed" title="source: paper_sweep.controls_undisturbed">121</span></span><span class="l">controls undisturbed</span></div></div>
+</section>
+<section id="coverage">
+  <h2 class="doc-h2">Coverage</h2>
+  <p class="section-note">Domain: <span class="sourced" data-source="coverage.covered_interval.0" title="source: coverage.covered_interval.0">3</span> – <span class="sourced" data-source="coverage.covered_interval.1" title="source: coverage.covered_interval.1">1099511627776</span></p>
+  <div class="stats"><div class="stat"><span class="n"><span class="sourced" data-source="coverage.odd_starts_checked" title="source: coverage.odd_starts_checked">549755813887</span></span><span class="l">odd starts checked</span></div><div class="stat"><span class="n"><span class="sourced" data-source="coverage.total_engine_seconds" title="source: coverage.total_engine_seconds">981.508</span></span><span class="l">engine seconds</span></div></div>
+</section>
+<section id="gates">
+  <h2 class="doc-h2">Gates</h2>
+  <table class="ledger"><thead><tr><th>Gate</th><th>Result</th></tr></thead><tbody><tr><td>Self-test</td><td><span class="sourced" data-source="gates.self_test.ok" title="source: gates.self_test.ok">true</span></td></tr><tr><td>Reference cross-check</td><td><span class="sourced" data-source="gates.reference_cross_check.agree" title="source: gates.reference_cross_check.agree">true</span></td></tr><tr><td>External anchors (OEIS)</td><td><span class="sourced" data-source="gates.external_anchors.ok" title="source: gates.external_anchors.ok">true</span></td></tr><tr><td>Mutation drill</td><td><span class="sourced" data-source="gates.mutation_drill.ok" title="source: gates.mutation_drill.ok">true</span></td></tr></tbody></table>
+</section>
+<section id="provenance">
+  <h2 class="doc-h2">Provenance</h2>
+  <p class="section-note">Rendered 2026-09-03 from <code>agent/collatz-verification-zhuiheng</code> at build time — not vendored into this site. Full reports and gate logs: <a href="https://github.com/kakon77777-commits/amral-research-trees/tree/agent/collatz-verification-zhuiheng/collatz-verification-zhuiheng">amral-research-trees / agent/collatz-verification-zhuiheng</a>.</p>
+</section>
+<footer class="sitefoot">
+  <span>AMRAL Verify — secondary verification of AI-frontier-math research lines, rendered from gate logs at build time. Every number links to the log it came from.</span>
+  <a href="https://amral.evemisslab.com/">AMRAL main site</a>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+/* AMRAL Verify — additions on top of AMRAL's shared site.css. */
+
+.sourced {
+  border-bottom: 1px dotted var(--line);
+  cursor: help;
+}
+.sourced:hover { border-bottom-color: var(--ink-dim); }
+
+.claim-id {
+  font-weight: 700;
+  white-space: nowrap;
+  width: 3em;
+}
+
+ul.non-claims {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.88rem;
+  color: var(--ink-dim);
+}
+ul.non-claims li { margin-bottom: 6px; }
