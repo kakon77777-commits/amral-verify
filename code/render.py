@@ -174,18 +174,17 @@ def build_line_detail(line, ctx, out_dir):
 
     body_claims = build_claims_line(root) if satisfies_claims else build_envelope_only_line(root)
 
-    ps = root.get("paper_sweep", {})
-    coverage = root.get("coverage", {})
-    gates = root.get("gates", {})
-
-    # Standalone counts -- no natural "total" to pair against.
-    solo_stats = [(p, l) for p, l in [
-        ("paper_sweep.run_reports", "run reports"),
-        ("paper_sweep.drills", "drills"),
-    ] if _path_exists(root, p)]
+    # Standalone figures worth headlining are this line's own declaration
+    # (headline_figures, under results-figures/1) -- never a hardcoded
+    # path list here. This is what let Collatz-specific field names
+    # (paper_sweep.run_reports etc.) leak into a renderer meant to work
+    # for any line's own data shape; a line's own validator enforces that
+    # nothing declared here also appears in its own render_pairs, so a
+    # figure that needs a denominator can't be re-offered as if it didn't.
     stat_html = "".join(
-        f'<div class="stat"><span class="n">{sourced(root, path)}</span><span class="l">{esc(label)}</span></div>'
-        for path, label in solo_stats
+        f'<div class="stat"><span class="n">{sourced(root, f["path"])}</span><span class="l">{esc(f["label"])}</span></div>'
+        for f in ev.get("headline_figures_to_render", [])
+        if _path_exists(root, f.get("path", ""))
     )
 
     # Which figures must never render alone is this line's own fact, not
@@ -205,23 +204,18 @@ def build_line_detail(line, ctx, out_dir):
             gate_rows.append(f'<tr><td>{esc(gname)}</td><td>{sourced(root, gpath)}</td></tr>')
     gates_html = f'<table class="ledger"><thead><tr><th>Gate</th><th>Result</th></tr></thead><tbody>{"".join(gate_rows)}</tbody></table>' if gate_rows else ""
 
+    # Everything that fits headline_figures' flat {path, label} shape
+    # (odd_starts_checked, total_engine_seconds, chunks, ...) is declared
+    # there now and rendered generically above -- listing any of them
+    # again here would duplicate them on the page. All that's left for
+    # this section is the domain range, which doesn't fit that shape (a
+    # range needs both endpoints shown together, not one label each) and
+    # so stays this renderer's own -- Collatz-specific -- presentation.
     coverage_html = ""
-    if coverage:
-        # odd_starts_checked is deliberately NOT listed here even though
-        # it's a coverage figure -- it's already rendered, correctly
-        # paired with odd_starts_expected, in Verification scale above.
-        # Rendering it again here bare (no pair alongside it) reintroduces
-        # exactly the gap build_pairs_section() exists to close, in a
-        # different section of the same page -- found by 墜衡 checking
-        # this exact page, 2026-09-03.
-        cov_stats = [(p, l) for p, l in [
-            ("coverage.total_engine_seconds", "engine seconds"),
-        ] if _path_exists(root, p)]
-        if cov_stats:
-            coverage_html = f'''<section id="coverage">
+    if _path_exists(root, "coverage.covered_interval.0") and _path_exists(root, "coverage.covered_interval.1"):
+        coverage_html = f'''<section id="coverage">
   <h2 class="doc-h2">Coverage</h2>
   <p class="section-note">Domain: {sourced(root, "coverage.covered_interval.0")} – {sourced(root, "coverage.covered_interval.1")}</p>
-  <div class="stats">{"".join(f'<div class="stat"><span class="n">{sourced(root, p)}</span><span class="l">{esc(l)}</span></div>' for p, l in cov_stats)}</div>
 </section>'''
 
     # A heading with nothing under it reads as "this line has none of
