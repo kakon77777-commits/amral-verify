@@ -84,7 +84,7 @@ PAGE = '''<!DOCTYPE html>
 <div class="wrap narrow">
 {body}
 <footer class="sitefoot">
-  <span>AMRAL Verify — secondary verification of AI-frontier-math research lines, rendered from gate logs at build time. Every number links to the log it came from.</span>
+  <span>AMRAL Verify — secondary verification of AI-frontier-math research lines, rendered from each line's own results.v1.json at build time. Every number carries the exact source path it was rendered from (hover to see it) — not a link, and results.v1.json is a summary its own build derives from the gate logs, not the gate logs themselves.</span>
   <a href="https://amral.evemisslab.com/">AMRAL main site</a>
 </footer>
 </div>
